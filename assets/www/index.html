@@ -1,0 +1,925 @@
+<!DOCTYPE html>
+<html>
+<style>
+
+#c{
+width:100%;
+height:100%;
+
+}
+
+ body {  
+    margin:0px;  
+    padding:0px;  
+    text-align:center;
+    background: #000;  
+  }  
+
+</style>
+  <head>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"></meta>
+   </head>
+   <body> 
+	<canvas id='c'></canvas>
+	
+    <script type="text/javascript" charset="utf-8" src="phonegap-1.2.0.js"></script>
+    <script type="text/javascript" charset="utf-8">
+
+    
+    //var width = 300;
+    //var height = 200;
+    //document.getElementById("width").innerHTML = width;
+    //document.getElementById("height").innerHTML = height;
+    c = document.getElementById('c');
+    var ctx = c.getContext('2d');
+    //c.width = width;
+    //c.height = height;
+    c.height = c.height*0.9;
+   var width = c.width;
+   var height = c.height;
+
+   
+   
+   var ready = false;
+    var start=false;
+    var control=false;
+    
+    var missiles = [];
+    var nmissiles = 0;
+    var nstars=25, stars=[];
+
+    var nrOfBars = 1, bars=[];
+    var barSpeed=10;
+
+    var ammo_packs = [];
+    var n_ammo_packs = 0;
+
+    var health_packs = [];
+    var n_health_packs = 0;
+
+    var clock_packs = [];
+    var n_clock_packs = 0;
+    var GameOver = false;
+    var time=0;
+    var Points = 0;
+    var HighScore = 0;
+    var level=1;
+    var starSpeed=3;
+    var startAmmo=25;
+    var startscreen = false;
+    var collided = false;
+    var ammo_collide = false;
+    var health_collide = false;
+    var clock_collide = false;
+    var accel_x, accel_y, accel_z;
+  
+    var ideal_screen_height=450, ideal_screen_width=800;
+    
+    var clear = function(){
+    	ctx.fillStyle = '#000';
+    	ctx.beginPath();
+    	ctx.rect(0, 0, width, height);
+    	ctx.closePath();
+    	ctx.fill();
+    }
+    
+    clear();
+     
+  // var logo_loaded=false;
+   logo = new Image();
+  logo.src = "logo.png";
+  
+  
+  var astroid_loaded=false;
+  var ideal_bar_width=50, ideal_bar_height=50;
+  astroid = new Image();
+  astroid.src = "asteroid.png";
+  astroid.onload = function(){
+  	astroid_loaded=true;
+  }
+  var bar_height = ~~(height*ideal_bar_height/ideal_screen_height);
+  var bar_width = ~~(width*ideal_bar_width/ideal_screen_width); 
+  
+  var con_loaded=false;
+  var ideal_con_width=800, ideal_con_height=450;
+  con = new Image();
+  con.src = "controls.png";
+  con.onload = function(){
+  	con_loaded=true;
+  }
+  var con_height = ~~(height*ideal_con_height/ideal_screen_height);
+  var con_width = ~~(width*ideal_con_width/ideal_screen_width); 
+  
+  
+  var missile_loaded=false;
+  var ideal_missile_width=25, ideal_missile_height=10;
+  missile = new Image();
+  missile.src = "missile.png";
+  missile.onload = function(){
+  	missile_loaded=true;
+  }
+  var missile_height = ~~(height*ideal_missile_height/ideal_screen_height);
+  var missile_width = ~~(width*ideal_missile_width/ideal_screen_width); 
+
+  
+  
+  var ammopack_loaded=false;
+  var ideal_ammopack_width=50, ideal_ammopack_height=50;
+  ammopack = new Image();
+  ammopack.src = "bullets.png";
+  ammopack.onload = function(){
+  	ammpack_loaded=true;
+  }
+  var ammopack_height = ~~(height*ideal_ammopack_height/ideal_screen_height);
+  var ammopack_width = ~~(width*ideal_ammopack_width/ideal_screen_width); 
+
+  var healthpack_loaded=false;
+  var ideal_healthpack_width=50, ideal_healthpack_height=50;
+  healthpack = new Image();
+  healthpack.src = "healthpack.png";
+  healthpack.onload = function(){
+  	healthpack_loaded=true;
+  }
+  var healthpack_height = ~~(height*ideal_healthpack_height/ideal_screen_height);
+  var healthpack_width = ~~(width*ideal_healthpack_width/ideal_screen_width); 
+  
+  var clockpack_loaded=false;
+  var ideal_clockpack_width=50, ideal_clockpack_height=50;
+  clockpack = new Image();
+  clockpack.src = "clock.png";
+  clockpack.onload = function(){
+  	clockpack_loaded = true;
+  }
+  var clockpack_height = ~~(height*ideal_clockpack_height/ideal_screen_height);
+  var clockpack_width = ~~(width*ideal_clockpack_width/ideal_screen_width); 
+  
+  var callnum=0;
+  var drawlogo = function(){
+
+	  if (callnum==0){
+	  logo.onload = function(){
+		  	ctx.drawImage(logo, 0, 0, width, height);
+		  }
+	  }
+	  else{
+		  ctx.drawImage(logo, 0, 0, width, height); 
+	  }
+	
+  callnum+=1;
+  }
+    
+  var drawcontrols = function(){
+	  
+	  if(con_loaded){
+		  ctx.drawImage(con, 0, 0, width, height);
+	  }
+  }
+  
+  
+  var fighter = new ( function(){
+	  var that = this;
+
+	  
+	  that.image_loaded=false;
+	  that.image = new Image();
+	  that.image.src = "fighter.png";
+	  that.image.onload=function(){
+		  that.image_loaded=true;
+	  }
+
+	  that.shield_loaded=false;
+	  that.shield = new Image();
+	  that.shield.src = "shield.png";
+	  that.shield.onload=function(){
+		  that.shield_loaded=true;
+	  }
+	  
+	  
+		that.ideal_width=74;
+		that.ideal_height=97;
+	  that.width=~~(width*that.ideal_width/ideal_screen_width);
+	  that.height=~~(height*that.ideal_height/ideal_screen_height)
+	  
+	  that.agility=12;
+	  that.X=0;
+	  that.Y=0;
+	  that.health=100;
+
+	  that.ammo=startAmmo;
+
+	  that.setPosition =function(x,y){
+
+	  that.X=x;
+	  that.Y=y;
+
+	  }
+	   
+	  that.draw = function(){  
+	              
+				if(that.image_loaded){
+				ctx.drawImage(that.image, that.X, that.Y, that.width, that.height);
+				}
+	    
+	  	}  
+
+
+	  that.drawShield = function(){  
+	          
+	  		if(that.shield_loaded){
+	  		try {    
+	  			ctx.drawImage(that.shield, that.X, that.Y, that.width, that.height);  
+	  		} catch (e) {  
+	          }  
+	  		}
+	      }   
+
+	  that.moveUp = function(){
+	  if (that.Y > 0) {
+	  that.setPosition(that.X, that.Y-that.agility);
+	  }
+	  }
+
+	  that.moveDown = function(){  
+	  if (that.Y + that.height < height) {  
+	  that.setPosition(that.X, that.Y+that.agility);  
+	  }  
+	  } 
+
+	  that.moveRight = function(){
+	  if (that.X < width) {
+	  that.setPosition(that.X+that.agility, that.Y);
+	  }
+	  }
+
+	  that.moveLeft = function(){
+	  if (that.X > 0) {
+	  that.setPosition(that.X-that.agility, that.Y);
+	  }
+	  }
+
+
+	  that.shoot = function(){
+
+	  if (that.ammo > 0){
+	  that.ammo-=1;
+	  missiles.push([that.X+that.width, that.Y+that.height]);
+	  nmissiles+=1;
+
+	  console.log('Fighter Coords When Shot:' + that.X + ' ' + that.Y);
+	  }
+
+	  }
+
+  })();
+
+	  fighter.setPosition(~~((width-fighter.width)/2), ~~((height-fighter.height)/2) );
+
+ 
+	  /*---Setting Up Moving Stars----*/
+
+	  var setupStars = function (){
+
+	  	for (var i=0; i < nstars; i++){
+	  			//	x coord			y_coord		radius(0-100)	transparancy
+	  		stars.push([Math.random()*width, Math.random()*height, Math.random()*2.0, Math.random()/0.5])
+	  	}
+	  	}
+
+	  	setupStars();
+
+
+	  	//Function to draw stars, called on every loop
+	  	var DrawStars = function() {
+
+	  		for (var i=0; i < nstars; i++){
+
+	  		ctx.fillStyle = 'rgba(255, 255, 255, ' + stars[i][3] + ')';
+	  		ctx.beginPath();
+	  		ctx.arc(stars[i][0], stars[i][1], stars[i][2], 0, Math.PI*2, true);  
+	  		ctx.closePath();
+	  		ctx.fill();
+	  		}
+
+	  	}
+
+	  	//Function to move stars, called on every loop
+	  	var MoveStars = function(deltaX){
+
+	  		for (var i=0; i < nstars; i++){
+	  			if(stars[i][0]-stars[i][2] < 0){
+	  			stars[i][0] = width - stars[i][2];
+	  			stars[i][2] = Math.random() * 2.0;
+	  			stars[i][1] = Math.random() * height;
+	  			stars[i][3] = Math.random()/0.5;
+	  			}
+	  			else{
+	  			stars[i][0]-= deltaX;
+	  			}
+	  		}
+	  	}
+	  /*---Stars Done---*/	  
+	  
+	  /*---Starting Astroids!!----*/	
+
+	 
+	  
+var setupBars = function(){
+    
+for (var i = 0; i < nrOfBars; i++) {  
+//		X POSITION    		Y POSITION
+	bars.push ([Math.random()*(width), Math.random()*height])  
+}  
+}
+setupBars();
+
+var addBar = function(){
+
+ bars.push([width, Math.random()*height]);
+
+}
+
+var DrawBars = function() {
+
+	//alert(nrOfBars + " " + bars.length);
+	for (var i=0; i < nrOfBars; i++){
+	if(astroid_loaded){
+	ctx.drawImage(astroid, bars[i][0], bars[i][1], bar_width, bar_height); 
+	}
+	}
+}  
+
+
+MoveBars = function(deltaX){
+
+	for (var i=0; i < nrOfBars; i++){
+		if(bars[i][0] < 0){
+		bars[i][0] = width - 30;
+		bars[i][1] = Math.random() * height;		
+		}
+		else{
+		bars[i][0]-= deltaX;
+		}
+	}
+}
+
+var checkCollision = function(){  
+  
+	var eps = 30;
+	for (var i=0; i < nrOfBars; i++){
+
+		if( (Math.abs(fighter.X - bars[i][0]) < (fighter.width/2 + bar_width/2) ) && 
+			(Math.abs(fighter.Y - bars[i][1]) < (fighter.height/2 + bar_height/2) ) ) {
+		fighter.health -=2;	
+		collided = true;
+		}
+	
+
+	}
+
+if(fighter.health <= 0){
+	GameOver = true;
+	}
+};  
+/*----Astroids done---*/
+	  
+	/*--Starting Missiles---*/ 
+
+var drawMissiles = function (){
+
+for (var i=0; i<nmissiles; i++){
+ctx.drawImage(missile, missiles[i][0], missiles[i][1], missile_width, missile_height);
+}
+
+}
+
+var moveMissiles = function (){
+
+var outofbounds =[];
+
+if (nmissiles > 0){
+	for (var i=0; i<nmissiles; i++){
+
+	if(missiles[i][0] < width){
+		missiles[i][0] += 10;
+		}
+	else{
+	outofbounds.push([i]);
+	}
+
+	}
+
+}
+
+if(outofbounds.length > 0){
+
+for (var i=0; i < outofbounds.length; i++){
+
+if(outofbounds[i]==0){
+missiles.splice(0, 1);
+}
+else{
+missiles.splice(outofbounds[i], outofbounds[i]);
+}
+
+}
+nmissiles-= outofbounds.length;
+
+}
+
+}
+
+var hits;
+var missileHitIndex = [];
+var astroidHitIndex = [];
+
+var missileTest = function (){
+
+	if(nmissiles > 0){
+hits=0;
+var a=0, alreadyHit=0;
+var next_missiles=[]
+
+for( var m=0; m < nmissiles; m++){
+
+	a=0;
+	alreadyHit=0;
+	
+	while((a < nrOfBars) && (alreadyHit==0)){
+
+	if( (Math.abs( (missiles[m][0]+0.5*missile_width) - (bars[a][0]+0.5*bar_width)) < ( (bar_width+missile_width)/2 ) ) && 
+		(Math.abs( (missiles[m][1]+0.5*missile_height)- (bars[a][1]+0.5*bar_height)) < ( (bar_height + missile_height)/2) )  ){
+
+
+		hits += 1;
+		missileHitIndex.push(m);
+		astroidHitIndex.push(a);
+		alreadyHit=1;
+		}
+	a++;
+	}
+	
+	if(alreadyHit==0){
+		next_missiles.push([ missiles[m][0], missiles[m][1] ]);
+	}
+}
+
+missiles.length=0;
+//for(var i=0; i < next_missiles.length; i++){
+//	missiles.push([next_missiles[i][0], next_missiles[i][1] ]);
+//}
+missiles=[].concat(next_missiles);
+nmissiles = missiles.length;
+next_missiles.length=0;
+
+
+if (hits > 0){
+for ( var h =0; h < hits; h++){
+
+	bars[astroidHitIndex[h]][0] = width;
+	bars[astroidHitIndex[h]][1] = Math.random()*height;
+}
+}
+
+Points += 25*hits;
+missileHitIndex.length=0;
+astroidHitIndex.length=0;
+
+	}
+	}
+/*----Missiles Done---*/  
+	  
+	  /*----Starting Healthpacks------*/
+ var health_pack_test = function(){
+
+var mean_health_time = 2500.0;
+var frame_time=20.0;
+var rand = Math.random(132564);
+
+if((rand < (frame_time/mean_health_time)) && (n_health_packs < 1) ){
+//alert('New Health Pack');
+health_packs.push([width, Math.random()*height]);
+n_health_packs+=1;
+}
+
+}
+
+var draw_health_pack = function(){
+
+ctx.drawImage(healthpack, health_packs[0][0], health_packs[0][1], healthpack_width, healthpack_height);
+
+}
+
+var move_health_pack = function(){
+
+	if(health_packs[0][0] < 0){
+		health_packs.length=0;
+		n_health_packs = 0;
+		}
+		else{
+		health_packs[0][0]-= 5;
+		}
+ }
+
+
+var check_healthpack_taken = function(){
+
+if( (Math.abs(fighter.X - health_packs[0][0]) < (fighter.width/2 + healthpack_width/2) ) && 
+			(Math.abs(fighter.Y - health_packs[0][1]) < (fighter.height/2 + healthpack_height/2 ) ) ) {
+
+//	alert('health pack taken');
+	health_packs.length = 0;
+	n_health_packs = 0;
+
+	if (fighter.health < 40){
+	fighter.health+=60;
+	}
+	else{
+	fighter.health=100;
+	}
+	health_collided = true;
+}
+
+}
+
+
+/*-----END OF HEALTH PACK FUNCTIONS---------*/  
+
+
+var clock_pack_test = function(){
+
+var mean_clock_time = 5000.0;
+var frame_time=20.0;
+var rand = Math.random(894653);
+
+if((rand < (frame_time/mean_clock_time)) && (n_clock_packs < 1) && (level > 1) ){
+//alert('New Health Pack');
+clock_packs.push([width, Math.random()*height]);
+n_clock_packs+=1;
+}
+
+}
+
+var draw_clock_pack = function(){
+
+ctx.drawImage(clockpack, clock_packs[0][0], clock_packs[0][1], clockpack_width, clockpack_height);
+
+}
+
+var move_clock_pack = function(){
+
+	if(clock_packs[0][0] < 0){
+		clock_packs.length=0;
+		n_clock_packs = 0;
+		}
+		else{
+		clock_packs[0][0]-= 5;
+		}
+ }
+
+
+var check_clockpack_taken = function(){
+
+if( (Math.abs(fighter.X - clock_packs[0][0]) < (fighter.width/2 + clockpack_width/2) ) && 
+			(Math.abs(fighter.Y - clock_packs[0][1]) < (fighter.height/2 + clockpack_height/2)) ) {
+
+//	alert('health pack taken');
+	clock_packs.length = 0;
+	n_clock_packs = 0;
+
+	barSpeed=10;	
+	starSpeed=3;
+clock_collided = true;
+}
+
+}
+
+/*----------END OF CLOCK PACK FUNCTIONS-------------------------*/
+ 
+
+var ammo_pack_test = function(){
+
+var mean_ammo_time = 1500.0;
+var frame_time=20.0;
+var rand = Math.random(564823);
+
+if((rand < (frame_time/mean_ammo_time)) && (n_ammo_packs < 1) ){
+//alert('New Ammo Pack');
+ammo_packs.push([width, Math.random()*height]);
+n_ammo_packs+=1;
+}
+
+}
+
+var draw_ammo_pack = function(){
+
+ctx.drawImage(ammopack, ammo_packs[0][0], ammo_packs[0][1], ammopack_width, ammopack_height);
+
+}
+
+var move_ammo_pack = function(){
+
+	if(ammo_packs[0][0] < 0){
+		ammo_packs.length=0;
+		n_ammo_packs = 0;
+		}
+		else{
+		ammo_packs[0][0]-= 5;
+		}
+ }
+
+
+var check_pack_taken = function(){
+
+if( (Math.abs(fighter.X - ammo_packs[0][0]) < (fighter.width/2 + ammopack_width/2) ) && 
+			(Math.abs(fighter.Y - ammo_packs[0][1]) < (fighter.height/2 + ammopack_height/2) ) ) {
+
+	ammo_packs.length = 0;
+	n_ammo_packs = 0;
+	fighter.ammo+=10;
+	ammo_collided = true;
+}
+
+}
+/*-----END OF AMMO PACK FUNCTIONS----------*/ 
+
+
+document.touchstart = function(e){
+    
+    	var canvasX, canvasY;
+    	canvasX = e.screenX;
+    	canvasY = e.screenY;
+	
+    
+    if(start){
+    	
+			if(   ((canvasX > 0.325*screen.width) && ( canvasX <0.4125*screen.width))
+    			&& ( (canvasY > 0.03*screen.height) && (canvasY < 0.24*screen.height))	){
+				start=false;
+    			gloop();
+    		}
+    		
+    		if(   ((canvasX > 0.8375*screen.width) && ( canvasX <0.9875*screen.width))
+        			&& ( (canvasY > 0.03*screen.height) && (canvasY < 0.24*screen.height))	){
+    				start=false;
+        			controls();
+        	}	
+    		
+		}
+    	else{
+    		
+    		if(control){
+    	    	
+    			if(   ((canvasX > 0.65*screen.width) && ( canvasX <0.775*screen.width))
+        			&& ( (canvasY > 0.03*screen.height) && (canvasY < 0.24*screen.height))	){
+    				control=false;
+        			gloop();
+        		}
+        		
+        		if(   ((canvasX > 0.35*screen.width) && ( canvasX <0.475*screen.width))
+            			&& ( (canvasY > 0.03*screen.height) && (canvasY < 0.24*screen.height))	){
+        				control=false;
+            			startgame();
+            	}	
+        		
+    		}else{
+    		
+    			if(GameOver){
+    				ResetGame();
+    			}
+    			else{
+    				if( !(collided)  ){
+    				fighter.shoot();
+    				}
+    			}
+    		}
+    	}
+    }
+    
+    var startgame=function(){
+    	clear();
+    	start=true;
+    	drawlogo();
+    }
+    
+    var controls=function(){
+    	clear();
+    	control=true;
+    	drawcontrols();
+    }
+ 
+	startgame();
+
+
+	var GameOverScreen = function(){
+	clear();
+	ctx.fillStyle    = '#00f';
+	ctx.font         = 'bold ' + String(Math.floor(height*0.14)) + 'px sans-serif';
+	ctx.textBaseline = 'top';
+
+	if(Points < HighScore){
+		ctx.fillText  ("Game Over!!!", width*0.1, height*0.15);
+	        ctx.fillText ("You Scored: " + Points, width*0.1, height*0.3); 
+		ctx.fillText ("Your High Score is: " + HighScore, width*0.1, height*0.45);
+		ctx.fillText ("Tap to restart...", width*0.1, height*0.6);
+		}
+
+		else{
+		ctx.fillText ("Game Over!!!", width*0.1, height*0.15);
+		ctx.fillText ("You Scored: " + Points, width*0.1, height*0.3);
+		ctx.fillText ("That's a New High Score!", width*0.1, height*0.45); 
+		ctx.fillText ("Your old High Score was: " + HighScore, width*0.1, height*0.6);
+		ctx.fillText ("Tap to restart...", width*0.1, height*0.75);
+		}
+
+	}
+
+	var ResetGame = function(){
+
+		if(Points > HighScore){
+		HighScore = Points;
+		}
+		
+		fighter.setPosition(~~((width-fighter.width)/2), ~~((height-fighter.height)/2) );
+
+		bars.length=0;
+		missiles.length=0;
+		var test;
+		
+		nrOfBars=1;
+		barSpeed=10;	
+		starSpeed=3;
+
+
+		for (var i = 0; i < nrOfBars; i++) {
+		test = Math.random();
+	  	if(test > 0.5){
+		bars.push ([Math.random()*width, Math.random()*(height/3.0), 20 + Math.random()*20 ])
+		}
+		else{
+		bars.push ([Math.random()*width, height - Math.random()*(height/3.0), 20 + Math.random()*20 ])
+		}
+
+	  
+		}  
+
+		GameOver = false;
+		Points=0;
+		fighter.ammo=startAmmo;
+		nmissiles=0;
+		time=0;
+		level=1;
+		fighter.health=100;
+		ammo_packs.length=0;
+		n_ammo_packs = 0;
+
+		health_packs.length=0;
+		n_health_packs = 0;
+
+		startgame();
+
+	}	
+	
+	 var writeInfo = function(){
+
+		 ctx.fillStyle    = '#00f';
+		 ctx.font         = 'bold 10px sans-serif';
+		 ctx.textBaseline = 'top';
+
+		 	ctx.fillText  ("Score: " + Points, width*0.01, height*0.95);
+		 	ctx.fillText  ("Ammo: " + fighter.ammo, width*0.25, height*0.95);
+		 	ctx.fillText  ("Level: " + level, width*0.5, height*0.95);
+		 	ctx.fillText  ("Health: "+fighter.health, width*0.75, height*0.95);
+
+		 }
+	 
+var checkMotion = function(){
+	if((accel_x < 2.0) ){
+		//y0-=10;
+		fighter.moveUp();
+	}
+	else{
+		if((accel_x > 4.0)){
+			//y0+=10;
+			fighter.moveDown();
+			
+		}
+	}
+
+
+	if((accel_y < -1.0) ){
+		//x0-=10;
+		fighter.moveLeft();
+	}
+	else{
+		if( (accel_y > 1.0)){
+			//x0+=10;
+			fighter.moveRight()
+		}
+	}
+}	
+	
+ var gloop = function gloop() {
+    
+	 	if(!(GameOver)){
+	 	clear();	
+    	document.addEventListener("deviceready", onDeviceReady, false);   	
+    	 function onDeviceReady(){
+    		 navigator.accelerometer.getCurrentAcceleration(onSuccess, onError);
+    	} 
+ 		writeInfo();
+    	 
+    	DrawStars();
+    	MoveStars(starSpeed);
+ 
+    	MoveBars(barSpeed);	
+    	DrawBars();
+    	fighter.draw();
+    	collided = false;
+    	checkCollision();
+    	if(collided){
+    	fighter.drawShield();
+    	}
+    	
+    	
+    	moveMissiles();	
+    	drawMissiles();	
+    	missileTest();
+    		
+    	if(missiles.length != nmissiles){
+    		alert('Somethings Gone Wrong: MB1');
+    	}
+    	
+    	health_pack_test();
+    	if(n_health_packs == 1){
+    	draw_health_pack();
+    	move_health_pack(); // Move ammo pack might result in n_ammo_packs == 0 if ammo_pack scrolls off screen
+    		if(n_health_packs ==1){
+    		health_collided = false;
+    		check_healthpack_taken();
+    		}	
+
+    	}
+    	
+    	clock_pack_test();
+    	if(n_clock_packs == 1){
+    	draw_clock_pack();
+    	move_clock_pack(); // Move ammo pack might result in n_ammo_packs == 0 if ammo_pack scrolls off screen
+    		if(n_clock_packs ==1){
+    		clock_collided = false;
+    		check_clockpack_taken();
+    		}	
+
+    	}
+    	
+    	ammo_pack_test();
+    	if(n_ammo_packs == 1){
+    	draw_ammo_pack();
+    	move_ammo_pack(); // Move ammo pack might result in n_ammo_packs == 0 if ammo_pack scrolls off screen
+    		if(n_ammo_packs ==1){
+    		ammo_collided = false;
+    		check_pack_taken();
+    		}	
+
+    	}
+    	
+    	checkMotion();
+    	
+    	
+
+    	Points+=1;
+    	time +=1;
+
+
+    	if((time%250 == 0) && (time > 0)){
+    	nrOfBars+=1;
+    	starSpeed+=1;
+    	barSpeed+=1;
+    	addBar();
+    	fighter.agility+=1;
+    	level+=1;
+    	}
+    	
+    	
+    	t = setTimeout(gloop, 50);
+	 	}
+	 	else{
+	 		GameOverScreen();
+	 	}
+    }
+	
+    // onError: Failed to get the acceleration
+    //
+    function onError() {
+        alert('onError!');
+    }
+
+	function onSuccess(acceleration){
+		accel_x = acceleration.x;
+		accel_y = acceleration.y;
+		accel_z = acceleration.z;
+	}
+	
+    </script>
+  
+  </body>
+</html>

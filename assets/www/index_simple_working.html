@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+   </head>
+   <body> 
+	<canvas id='c'></canvas>
+	
+    <script type="text/javascript" charset="utf-8" src="phonegap-1.2.0.js"></script>
+    <script type="text/javascript" charset="utf-8">
+
+    
+    var width = 300;
+    var height = 200;
+    //document.getElementById("width").innerHTML = width;
+    //document.getElementById("height").innerHTML = height;
+    c = document.getElementById('c');
+    var ctx = c.getContext('2d');
+    c.width = width;
+    c.height = height;
+   
+
+    
+    
+    
+    
+    var clear = function(){
+    	ctx.fillStyle = '#000';
+    	ctx.beginPath();
+    	ctx.rect(0, 0, width, height);
+    	ctx.closePath();
+    	ctx.fill();
+    }
+    
+    clear();
+    
+    
+    var fighter_loaded=false;
+    fighter = new Image();
+   fighter.src = "fighter_small.png";
+   fighter.onload = function(){
+   	fighter_loaded=true;
+   }
+    
+    document.addEventListener("deviceready", onDeviceReady, false);
+
+    function onDeviceReady(){
+    	
+            startWatch();
+    } 
+      
+    function startWatch() {
+
+        var options = { frequency: 50 };
+
+        watchID = navigator.accelerometer.watchAcceleration(onSuccess, onError, options);
+    }
+	
+
+    var resultant;
+    
+    var x0 = 100, y0 = 100;
+    function onSuccess(acceleration) {
+    	clear();
+    	ctx.fillStyle    = '#ffffff';
+    	ctx.font         = 'bold 18px sans-serif';
+    	ctx.textBaseline = 'top';
+
+    		//resultant = Math.sqrt(acceleration.x*acceleration.x + acceleration.y*acceleration.y +acceleration.z*acceleration.z );
+    		ctx.fillText  ("a_x: "+ acceleration.x, 50, 2);
+    		ctx.fillText  ("a_y: "+ acceleration.y, 50, height-20);
+    		//ctx.fillText  ("a_z: "+ acceleration.z, 50, 62);
+    		//ctx.fillText  ("a_tot: " + resultant, 50, 92 );
+ 
+    	if((acceleration.x < 2.5) && (y0 > 0)){
+    		y0-=10;
+    	}
+    	else{
+    		if((acceleration.x > 3.5) && (y0 < height-50)){
+    			y0+=10;
+    		}
+    	}
+    
+    
+    	if((acceleration.y < -0.5) && (x0 > 0)){
+    		x0-=10;
+    	}
+    	else{
+    		if( (acceleration.y > 0.5) && (x0 < width-50)){
+    			x0+=10;
+    		}
+    	}
+    
+    ctx.drawImage(fighter, x0, y0);
+    
+    }
+
+    // onError: Failed to get the acceleration
+    //
+    function onError() {
+        alert('onError!');
+    }
+
+    </script>
+  
+  </body>
+</html>

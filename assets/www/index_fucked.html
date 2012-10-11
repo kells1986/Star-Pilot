@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+   </head>
+   <body> 
+	<canvas id='c'></canvas>
+	
+    <script type="text/javascript" charset="utf-8" src="phonegap-1.2.0.js"></script>
+    <script type="text/javascript" charset="utf-8">
+
+    
+    var width = 300;
+    var height = 200;
+    //document.getElementById("width").innerHTML = width;
+    //document.getElementById("height").innerHTML = height;
+    c = document.getElementById('c');
+    var ctx = c.getContext('2d');
+    c.width = width;
+    c.height = height;
+   
+    /*------Useful Variables-----*/ 
+    var missiles = [];
+    var nmissiles = 0;
+    var nstars=125, stars=[];
+
+    var nrOfBars = 1, bars=[];
+    var barSpeed=10;
+
+    var ammo_packs = [];
+    var n_ammo_packs = 0;
+
+    var health_packs = [];
+    var n_health_packs = 0;
+
+    var clock_packs = [];
+    var n_clock_packs = 0;
+    var GameOver = false;
+    var time=0;
+    var Points = 0;
+    var HighScore = 0;
+    var level=1;
+    var starSpeed=3;
+    var startAmmo=25;
+    var startscreen = false;
+    var collided = false;
+    var ammo_collide = false;
+    var health_collide = false;
+    var clock_collide = false;
+
+      
+    var clear = function(){
+    	ctx.fillStyle = '#000';
+    	ctx.beginPath();
+    	ctx.rect(0, 0, width, height);
+    	ctx.closePath();
+    	ctx.fill();
+    }
+    
+    clear();
+    
+    
+    var fighter = new ( function(){
+    	var that = this;
+
+    	that.image_loaded=false
+    	that.shield_loaded=false;
+    	that.image = new Image();
+    	that.image.src = "fighter_small.png";
+    	that.image.onload = function(){
+    		that.image_loaded=true;
+    	}
+
+
+    	that.shield = new Image();
+    	that.shield.src = "sheild.png";
+    	that.shield.onload = function(){
+    		that.shield_loaded=true;
+    	}
+
+
+
+    	that.width=95;
+    	that.height=65;
+
+    	that.agility=25;
+    	that.X=0;
+    	that.Y=0;
+    	that.health=100;
+
+    	that.ammo=startAmmo;
+
+    	that.setPosition =function(x,y){
+
+    	that.X=x;
+    	that.Y=y;
+
+    	}
+    	 
+    	that.draw = function(){  
+    	        
+    		if(that.image_loaded){
+    		try {  
+    	            ctx.drawImage(that.image, 0, 0, that.width, that.height, that.X, that.Y, that.width, that.height);  
+    	        } catch (e) {  
+    	      }  
+    		}
+    		}  
+
+
+    	that.drawShield = function(){  
+    	        
+    			if(that.shield_loaded){
+    			try {  
+    	            ctx.drawImage(that.shield, 0, 0, that.width, that.height, that.X, that.Y, that.width, that.height);  
+    	        } catch (e) {  
+    	        }  
+    			}
+    	    }   
+
+    	that.moveUp = function(){
+    	if (that.Y > 0) {
+    	that.setPosition(that.X, that.Y-that.agility);
+    	}
+    	}
+
+    	that.moveDown = function(){  
+    	if (that.Y + that.height < height) {  
+    	that.setPosition(that.X, that.Y+that.agility);  
+    	}  
+    	} 
+
+    	that.moveRight = function(){
+    	if (that.X < width) {
+    	that.setPosition(that.X+that.agility, that.Y);
+    	}
+    	}
+
+    	that.moveLeft = function(){
+    	if (that.X > 0) {
+    	that.setPosition(that.X-that.agility, that.Y);
+    	}
+    	}
+
+
+    	that.shoot = function(){
+
+    	if (that.ammo > 0){
+    	that.ammo-=1;
+    	missiles.push([that.X+that.width, that.Y+that.height]);
+    	nmissiles+=1;
+
+    	console.log('Fighter Coords When Shot:' + that.X + ' ' + that.Y);
+    	}
+
+    	}
+
+		that.logcomment = function(){
+			console.log("Heellllllllllllo " + that.image_loaded);
+		} 
+
+    	})();
+
+    	fighter.setPosition(~~((width-fighter.width)/2), ~~((height-fighter.height)/2) );
+
+    
+    document.addEventListener("deviceready", onDeviceReady, false);
+
+    function onDeviceReady(){
+    	
+    		if(fighter.image_loaded){
+            startWatch();
+    		}
+    } 
+      
+    function startWatch() {
+
+        var options = { frequency: 50 };
+
+        watchID = navigator.accelerometer.watchAcceleration(onSuccess, onError, options);
+    }
+	
+
+    var resultant;
+    
+    
+    function onSuccess(acceleration) {
+    	clear();
+    	fighter.draw();
+    	
+    	ctx.fillStyle    = '#ffffff';
+    	ctx.font         = 'bold 18px sans-serif';
+    	ctx.textBaseline = 'top';
+   		ctx.fillText  ("a_x: "+ acceleration.x, 50, 2);
+   		ctx.fillText  ("a_y: "+ acceleration.y, 50, height-20);
+
+    	
+    	/*fighter.logcomment();
+    	 
+    	if((acceleration.x < 2.5) ){
+    		fighter.moveDown();
+    	}
+    	else{
+    		if((acceleration.x > 3.5) ){
+    			fighter.moveUp();
+    		}
+    	}
+    
+    
+    	if((acceleration.y < -0.5) ){
+    		fighter.moveLeft();
+    	}
+    	else{
+    		if( (acceleration.y > 0.5)){
+    			fighter.moveRight();
+    		}
+    	}
+    
+   	*/
+    
+    }
+
+    // onError: Failed to get the acceleration
+    //
+    function onError() {
+        alert('onError!');
+    }
+
+    </script>
+  
+  </body>
+</html>
